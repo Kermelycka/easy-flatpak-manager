@@ -3,7 +3,7 @@ Easy flatpak manager - это программа, что позволяет ле
 
 Цель проекта это помочь тем, кто только открыл для себя linux и не привык к использованию терминала.
 ###### Скриншот программы
-![Скриншот программы](assets/screenshot.png)
+![Скриншот программы](assets/screenshot_RUS.png)
 ### Требования
 - Linux
 - установленный flatpak с [flathub](https://flathub.org/en/setup)
