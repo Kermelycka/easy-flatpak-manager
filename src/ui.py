@@ -1,31 +1,91 @@
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, 
                              QPushButton, QListWidget, QListWidgetItem, 
-                             QLabel, QTextEdit, QSplitter, QMessageBox, QInputDialog, QApplication)
+                             QLabel, QTextEdit, QSplitter, QMessageBox, QInputDialog, QApplication, QComboBox)
 from PyQt5.QtGui import QIcon, QFont
 from PyQt5.QtCore import Qt, QSize
 
-# Импортируем наш бэкенд!
 from backend import FlatpakBackend
 
 class FlatpakManager(QWidget):
     def __init__(self):
         super().__init__()
-        self.backend = FlatpakBackend() # Создаем экземпляр бэкенда
+        self.backend = FlatpakBackend()
+        
+        self.translations = {
+            "ru": {
+                "title": "Easy Flatpak Manager",
+                "btn_refresh": "Обновить список",
+                "btn_install": "Установить из Flathub",
+                "choose_app": "Выберите приложение",
+                "btn_kill": "Закрыть приложение",
+                "btn_run": "Запустить",
+                "btn_update": "Обновить",
+                "btn_uninstall": "Удалить",
+                "desc": "Описание:",
+                "version": "Версия:",
+                "loading": "Загрузка описания...",
+                "msg_success": "Успех",
+                "msg_error": "Ошибка",
+                "msg_installed": "успешно установлено!",
+                "msg_updated": "обновлен!",
+                "msg_deleted": "удален.",
+                "btn_yes": "Да",
+                "btn_no": "Нет",
+                "window_update": "Обнавление",
+                "window_delete": "Удаление",
+                "window_install": "Установка",
+                "window_install_example": "Введите ID приложения из Flathub\n(например: org.kde.krita):"
+            },
+            "en": {
+                "title": "Easy Flatpak Manager",
+                "btn_refresh": "Refresh list",
+                "btn_install": "Install from Flathub",
+                "choose_app": "Choose application",
+                "btn_kill": "Close app",
+                "btn_run": "Run",
+                "btn_update": "Update",
+                "btn_uninstall": "Uninstall",
+                "desc": "Description:",
+                "version": "Version:",
+                "loading": "Loading description...",
+                "msg_success": "Success",
+                "msg_error": "Error",
+                "msg_installed": "successfully installed!",
+                "msg_updated": "updated!",
+                "msg_deleted": "uninstalled.",
+                "btn_yes": "Yes",
+                "btn_no": "No",
+                "window_update": "Update app",
+                "window_delete": "Delete app",
+                "window_install": "Install app",
+                "window_install_example": "Enter App ID from Flathub\n(e.g.: org.kde.krita):"
+            }
+        }
+        self.current_lang = "ru" 
+        
         self.initUI()
         self.load_apps_to_list()
 
+    def tr(self, key):
+        return self.translations[self.current_lang].get(key, key)
+
     def initUI(self):
-        self.setWindowTitle('easy flatpak manager')
+        self.setWindowTitle(self.tr("title"))
         self.resize(900, 600)
 
         main_layout = QHBoxLayout()
         left_panel = QWidget()
         left_layout = QVBoxLayout(left_panel)
         
-        self.btn_refresh = QPushButton("🔄 Обновить список")
+        self.lang_combo = QComboBox()
+        self.lang_combo.addItems(["Русский", "English"])
+        self.lang_combo.currentIndexChanged.connect(self.change_language)
+        left_layout.addWidget(self.lang_combo)
+
+        self.btn_refresh = QPushButton(self.tr("btn_refresh"))
         self.btn_refresh.clicked.connect(self.load_apps_to_list)
         
-        self.btn_install = QPushButton("➕ Установить из Flathub")
+        self.btn_install = QPushButton(self.tr("btn_install"))
         self.btn_install.clicked.connect(self.action_install)
         
         self.list_widget = QListWidget()
@@ -44,7 +104,7 @@ class FlatpakManager(QWidget):
         self.icon_label.setFixedSize(64, 64)
         
         title_layout = QVBoxLayout()
-        self.name_label = QLabel("Выберите приложение")
+        self.name_label = QLabel(self.tr("choose_app"))
         self.name_label.setFont(QFont("Arial", 16, QFont.Bold))
         self.id_label = QLabel("")
         self.id_label.setStyleSheet("color: gray;")
@@ -58,11 +118,13 @@ class FlatpakManager(QWidget):
         self.desc_label = QTextEdit()
         self.desc_label.setReadOnly(True)
         
+        self.desc_title = QLabel(self.tr("desc"))
+        
         action_layout = QHBoxLayout()
-        self.btn_kill = QPushButton("Закрыть приложение") # Исправил bth на btn
-        self.btn_run = QPushButton("▶ Запустить")
-        self.btn_update = QPushButton("🔄 Обновить")
-        self.btn_uninstall = QPushButton("❌ Удалить")
+        self.btn_kill = QPushButton(self.tr("btn_kill"))
+        self.btn_run = QPushButton(self.tr("btn_run"))
+        self.btn_update = QPushButton(self.tr("btn_update"))
+        self.btn_uninstall = QPushButton(self.tr("btn_uninstall"))
         
         self.btn_kill.clicked.connect(self.action_kill)
         self.btn_run.clicked.connect(self.action_run)
@@ -75,7 +137,7 @@ class FlatpakManager(QWidget):
         action_layout.addWidget(self.btn_uninstall)
 
         right_layout.addLayout(header_layout)
-        right_layout.addWidget(QLabel("Описание:"))
+        right_layout.addWidget(self.desc_title)
         right_layout.addWidget(self.desc_label)
         right_layout.addLayout(action_layout)
 
@@ -88,6 +150,22 @@ class FlatpakManager(QWidget):
         self.setLayout(main_layout)
         self.set_buttons_enabled(False)
 
+    def change_language(self, index):
+        self.current_lang = "ru" if index == 0 else "en"
+        self.setWindowTitle(self.tr("title"))
+        self.btn_refresh.setText(self.tr("btn_refresh"))
+        self.btn_install.setText(self.tr("btn_install"))
+        self.btn_kill.setText(self.tr("btn_kill"))
+        self.btn_run.setText(self.tr("btn_run"))
+        self.btn_update.setText(self.tr("btn_update"))
+        self.btn_uninstall.setText(self.tr("btn_uninstall"))
+        self.desc_title.setText(self.tr("desc"))
+        
+        if not self.list_widget.currentItem():
+            self.name_label.setText(self.tr("choose_app"))
+        else:
+            self.on_app_selected(self.list_widget.currentItem(), None)
+
     def set_buttons_enabled(self, enabled):
         self.btn_kill.setEnabled(enabled)
         self.btn_run.setEnabled(enabled)
@@ -96,13 +174,12 @@ class FlatpakManager(QWidget):
 
     def load_apps_to_list(self):
         self.list_widget.clear()
-        self.name_label.setText("Выберите приложение")
+        self.name_label.setText(self.tr("choose_app"))
         self.id_label.setText("")
         self.desc_label.clear()
         self.icon_label.clear()
         self.set_buttons_enabled(False)
 
-        # Вызываем бэкенд!
         apps = self.backend.get_installed_apps()
         for app_name, app_id, app_version in apps:
             item = QListWidgetItem(app_name)
@@ -129,12 +206,11 @@ class FlatpakManager(QWidget):
         else:
             self.icon_label.clear()
 
-        self.desc_label.setText(f"Версия: {app_version}\n\n⏳ Загрузка описания...")
+        self.desc_label.setText(f"{self.tr('version')} {app_version}\n\n{self.tr('loading')}")
         QApplication.processEvents()
         
-        # Вызываем бэкенд!
         description = self.backend.get_app_description(app_id)
-        self.desc_label.setText(f"Версия: {app_version}\n\n{description}")
+        self.desc_label.setText(f"{self.tr('version')} {app_version}\n\n{description}")
 
     def get_current_app_id(self):
         item = self.list_widget.currentItem()
@@ -151,41 +227,47 @@ class FlatpakManager(QWidget):
     def action_update(self):
         app_id = self.get_current_app_id()
         if app_id:
-            QMessageBox.information(self, "Обновление", f"Обновление {app_id} началось. Подождите...")
+            QMessageBox.information(self, self.tr("window_update"), f"{app_id} {self.tr('msg_updated')}")
             success, error = self.backend.update_app(app_id)
-            if success:
-                QMessageBox.information(self, "Успех", f"{app_id} обновлен!")
-            else:
-                QMessageBox.warning(self, "Ошибка", error)
+            if not success:
+                QMessageBox.warning(self, self.tr("msg_error"), error)
             self.load_apps_to_list()
 
     def action_uninstall(self):
         app_id = self.get_current_app_id()
         if not app_id: return
         
-        reply = QMessageBox.question(self, 'Подтверждение', f'Удалить {app_id}?',
-                                     QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        msg_box = QMessageBox(self)
+        msg_box.setWindowTitle(self.tr("window_delete"))
+        msg_box.setText(f"{self.tr('btn_uninstall')} {app_id}?")
+        msg_box.setIcon(QMessageBox.Question)
+        msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+        msg_box.button(QMessageBox.Yes).setText(self.tr("btn_yes"))
+        msg_box.button(QMessageBox.No).setText(self.tr("btn_no"))
+        
+        reply = msg_box.exec_()
+        
         if reply == QMessageBox.Yes:
             success, error = self.backend.uninstall_app(app_id)
             if success:
-                QMessageBox.information(self, "Успех", f"{app_id} удален.")
+                QMessageBox.information(self, self.tr("msg_success"), f"{app_id} {self.tr('msg_deleted')}")
                 self.load_apps_to_list()
             else:
-                QMessageBox.warning(self, "Ошибка", error)
+                QMessageBox.warning(self, self.tr("msg_error"), error)
 
     def action_install(self):
-        app_id, ok = QInputDialog.getText(self, "Установка приложения", 
-                                          "Введите ID приложения из Flathub\n(например: org.kde.krita):")
+        app_id, ok = QInputDialog.getText(self, self.tr("window_install"), 
+                                          self.tr("window_install_example"))
         if ok and app_id.strip():
             app_id = app_id.strip()
-            self.setWindowTitle(f"Установка {app_id}...")
+            self.setWindowTitle(f"Installing {app_id}...")
             QApplication.processEvents()
             
             success, error = self.backend.install_app(app_id)
             
-            self.setWindowTitle('Менеджер Flatpak')
+            self.setWindowTitle(self.tr("title"))
             if success:
-                QMessageBox.information(self, "Успех", f"✅ {app_id} успешно установлено!")
+                QMessageBox.information(self, self.tr("msg_success"), f"{app_id} {self.tr('msg_installed')}")
                 self.load_apps_to_list()
             else:
-                QMessageBox.warning(self, "Ошибка", f"Не удалось установить:\n{error}")
+                QMessageBox.warning(self, self.tr("msg_error"), f"{error}")
